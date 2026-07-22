@@ -200,7 +200,7 @@ class BasicFilter(object):
             y_init=utils.tree_subset(y_meas, 0),
             theta=theta,
         )
-        logw = logw - jnp.log(n_particles)  # matches pseudocode: logw = logw - log(N)
+        logw = logw - jnp.log(n_particles) # Remove dependency
         filter_init = {
             "x_particles": x_particles,
             "logw": logw,
@@ -236,7 +236,8 @@ class BasicFilter(object):
 
             # Needed for reinforce: must be computed before logw is overwritten,
             # since it has to reference the weights the resampler actually saw.
-            logw_ad = logw[ancestors] - jax.lax.stop_gradient(logw[ancestors])
+            logw_norm = logw - jax.scipy.special.logsumexp(logw)
+            logw_ad = logw_norm[ancestors] - jax.lax.stop_gradient(logw_norm[ancestors])
 
             x_particles = resample_out["x_particles"]
             logw_prev = resample_out["logw"]  # uniform weights after resampling

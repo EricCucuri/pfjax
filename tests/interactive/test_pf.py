@@ -31,7 +31,7 @@ class BMModelSimple(pf.experimental.base_model.BaseModel):
         x_t ~  + Normal(beta * x_{t-1}, sigma^2)
         y_t ~ x_t + Normal(0, 1)
         """
-        super().__init__(bootstrap=False)
+        super().__init__(bootstrap=True)
 
     def state_lpdf(self, x_curr, x_prev, theta):
         beta, sigma = theta
@@ -58,12 +58,18 @@ class BMModelSimple(pf.experimental.base_model.BaseModel):
     def pf_init(self, key, y_init, theta):
         return (y_init + jax.random.normal(key), 0.0)
 
+    '''
+    def step_lpdf(self, x_curr, x_prev, y_curr, theta):
+        return self.state_lpdf(x_curr, x_prev, theta)
+
+    
     def pf_step(self, key, x_prev, y_curr, theta):
         x_curr = y_curr + jax.random.normal(key)
         lp_prop = jax.scipy.stats.norm.logpdf(x=x_curr, loc=0.0, scale=1.0)
         lp_targ = self.state_lpdf(x_curr=x_curr, x_prev=x_prev, theta=theta)
         lp_targ = lp_targ + self.meas_lpdf(y_curr=y_curr, x_curr=x_curr, theta=theta)
         return (x_curr, lp_targ - lp_prop)
+        '''
 
 
 key = jax.random.PRNGKey(0)
@@ -82,7 +88,7 @@ y_meas, x_state = pf.simulate(bm_model, key, n_obs, x_init, theta)
 n_particles = 20
 key, subkey = jax.random.split(key)
 
-n_obs_test = 10
+n_obs_test = 3
 out1 = pf.particle_filter(
     model=bm_model,
     key=key,
